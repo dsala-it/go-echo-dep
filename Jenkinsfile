@@ -14,19 +14,19 @@ pipeline {
                 echo 'Compiling...'
                 sh 'go version'
                 sh 'go build main.go'
-                docker-compose build
+                sh 'docker-compose build'
             }
         }
         stage('Install Dependencies') {
             steps {
                 echo 'To install all the dependency of golang library please run ...'
-                docker-compose run --rm app '/app/bin/dep' ensure
+                sh 'docker-compose run --rm app /app/bin/dep ensure'
             }
         }
         stage('RUN') {
             steps {
                 echo 'After the installation finish, you can run this ...'
-                docker-compose up -d
+                sh 'docker-compose up -d'
             }
         }
         stage('Test') {
