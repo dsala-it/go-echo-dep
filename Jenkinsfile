@@ -1,14 +1,18 @@
 pipeline {
-    agent any
-    tools {
-        go 'go1.18'
-    }
+
+    agent { docker { image 'golang:1.17.5-alpine' } }
+
     environment {
         GO114MODULE = 'on'
         CGO_ENABLED = 0 
         GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
     }
-    stages {     
+    stages {
+        stage('build') {
+            steps {
+                sh 'go version'
+            }
+        }   
         stage('GIT') {
             steps {
                 echo 'Installing dependencies'
