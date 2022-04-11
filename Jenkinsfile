@@ -8,7 +8,13 @@ pipeline {
         CGO_ENABLED = 0 
         GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
     }
-    stages {        
+    stages {     
+        stage('GIT') {
+            steps {
+                echo 'Installing dependencies'
+                git credentialsId: 'dsala-it-github', url: 'https://github.com/dsala-it/go-echo-dep/' 
+            }
+        }     
         stage('Pre Test') {
             steps {
                 echo 'Installing dependencies'
