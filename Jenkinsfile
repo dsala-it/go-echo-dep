@@ -13,7 +13,7 @@ pipeline {
                 echo 'Runnning Build Step ...'
                 echo 'Compiling...'
                 sh 'go version'
-                sh 'go build main.go'
+                //sh 'go build main.go'
                 sh 'docker-compose build'
             }
         }
