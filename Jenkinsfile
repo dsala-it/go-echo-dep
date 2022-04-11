@@ -1,43 +1,50 @@
 pipeline {
     agent any
     tools {
-        go 'go-1.11'
+        go 'go1.18'
     }
     environment {
-        GO111MODULE = 'on'
+        GO114MODULE = 'on'
+        CGO_ENABLED = 0 
+        GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
     }
-    
-    stages {
-        stage('Compile') {
+    stages {        
+        stage('Pre Test') {
             steps {
+                echo 'Installing dependencies'
+                sh 'go version'
+                sh 'go get -u golang.org/x/lint/golint'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Compiling and building'
                 sh 'go build'
             }
         }
+
         stage('Test') {
-            environment {
-                CODECOV_TOKEN = credentials('codecov_token')
-            }
             steps {
-                sh 'go test ./... -coverprofile=coverage.txt'
-                sh "curl -s https://codecov.io/bash | bash -s -"
+                withEnv(["PATH+GO=${GOPATH}/bin"]){
+                    echo 'Running vetting'
+                    sh 'go vet .'
+                    echo 'Running linting'
+                    sh 'golint .'
+                    echo 'Running test'
+                    sh 'cd test && go test -v'
+                }
             }
         }
-        stage('Code Analysis') {
-            steps {
-                sh 'curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.12.5'
-                sh 'golangci-lint run'
-            }
-        }
-        stage('Release') {
-            when {
-                buildingTag()
-            }
-            environment {
-                GITHUB_TOKEN = credentials('github_token')
-            }
-            steps {
-                sh 'curl -sL https://git.io/goreleaser | bash'
-            }
-        }
+        
     }
+    post {
+        always {
+            emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+                to: "${params.RECIPIENTS}",
+                subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}"
+            
+        }
+    }  
 }
